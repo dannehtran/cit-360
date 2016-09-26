@@ -3,7 +3,6 @@
   vars:
     db_password: password
   tasks:
-<<<<<<< HEAD
     - name: Copying MariaDB Repositories
       #Root permissions : "rw", Users and group: "r" 
       copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
@@ -29,34 +28,6 @@
 
     - name: Extracting db.tgz to ~/
       unarchive: src=db/db.tgz dest=~/ 
-=======
-    - name: Copying MariaDB Repository
-      #Root permissions :rw, Users and group: r
-      copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
-
-    - name: Installing and Updating MariaDB/Client
-      #Becomes root
-      become: yes
-      yum: name=MariaDB-server,MariaDB-client update_cache=yes state=present
-
-    - name: Starting MariaDB
-      #Becomes root
-      become: yes
-      service: name=mariadb state=started enabled=yes
-      
-    - name: Copying new MariaDB_Answers.txt
-      #Changes mariadb_answers.txt permission to Root:"rw" User and Group:"r"
-      template: src=db/mariadb_answers.txt dest=/tmp/mariadb_answers.txt mode=0644
-    
-    - name: Exectue MySQL Installaiton
-      #Becomes Root and uses the updated mariadb_answers.txt as input
-      become: yes
-      shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
-
-    - name: Extracting db.tgz to ~/home/vagrant
-      #No RWX permissions to any users
-      unarchive: src=db/db.tgz dest=~/ mode=0000
->>>>>>> 11e8ef4665ba2010dffb95131a3842c2e11bc200
 
     - name: Making Database
       command: ./make_databases.sh {{ db_password }} localhost chdir=~/db
