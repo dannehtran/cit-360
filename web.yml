@@ -87,7 +87,7 @@
       become: yes
       command: /usr/local/bin/composer.phar update chdir={{ service_dir }}
 
-    - name: Creates service_directory directory
+    - name: Creates service_directory
       #Becomes root
       become: yes
       shell: chdir="{{ service_dir }}" mode=0777
