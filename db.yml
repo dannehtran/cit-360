@@ -21,7 +21,7 @@
       #Changes mariadb_answers.txt permission to Root:"rw" User and Group:"r"
       template: src=db/mariadb_answers.txt dest=/tmp/mariadb_answers.txt mode=0644
 
-    - name: Execute MySQL Installation
+    - name: Executing MySQL Installation
       #Becomes root and uses the updated mariadb_answers.txt as input
       become: yes
       shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
