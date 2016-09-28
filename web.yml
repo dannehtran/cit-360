@@ -13,12 +13,12 @@
   vars_files:
     - secrets.yml
   tasks:
-    - name: Disabling SELinux
+    - name: Setting SELinux in permissive mode
       #Replaces "^SELINUX=" with "SELINUX=permissive"
       become: yes
       lineinfile: dest=/etc/sysconfig/selinux regexp="^SELINUX=" line="SELINUX=permissive"
 
-    - name: Setting SELinux in permissive mode
+    - name: Commands SELinux to go in permissive mode
       #Becomes root
       become: yes
       command: setenforce 0
@@ -85,7 +85,7 @@
       become: yes
       unarchive: src=web/{{ service_name }}.tgz dest="{{ service_dir }}" mode=0755
 
-    - name: Updating composer
+    - name: Updating composer directory
       become: yes
       command: /usr/local/bin/composer.phar update chdir={{ service_dir }}
 

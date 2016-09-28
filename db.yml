@@ -14,7 +14,7 @@
       yum: name=MariaDB-server,MariaDB-client update_cache=yes state=present
 
     - name: Starting MariaDB
-      #Becomes root
+      #Becomes root, will run on boot
       become: yes
       service: name=mariadb state=started enabled=yes
 
