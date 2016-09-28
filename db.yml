@@ -4,7 +4,8 @@
     - secrets.yml
   tasks:
     - name: Copying MariaDB Repositories
-      #Root permissions : "rw", Users and group: "r" 
+      #Becomes root. Root permissions : "rw", Users and group: "r"
+      become: yes 
       copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
       
     - name : Installing and Updating MariaDB/Client
@@ -27,8 +28,8 @@
       shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
 
     - name: Extracting db.tgz to ~/
-      unarchive: src=db/db.tgz dest=~/ 
-
-    - name: Making Database
+      unarchive: src=db/db.tgz dest=~/ mode=0755
+ 
+    - name: Making Database and changing directory
       command: ./make_databases.sh {{ db_password }} localhost chdir=~/db
       ignore_errors: True

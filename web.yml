@@ -40,6 +40,7 @@
         dest: /tmp/installer
 
     - name: Installing composer
+      become: yes
       shell: cat /tmp/installer | php -- --install-dir=/usr/local/bin    
 
     - name: Copying nginx's configuration file to destination location
@@ -56,6 +57,7 @@
 
     - name: Templates php.ini file
       #Permission for root: "rw" , User and group:"r"
+      become: yes
       template: src=web/php.ini.j2 dest=/etc/php.ini mode=0644
       register: php_conf
 
