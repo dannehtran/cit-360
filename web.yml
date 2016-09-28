@@ -24,6 +24,8 @@
       command: setenforce 0
 
     - name: Installing epel-release and updates them using yum
+      #Becomes root
+      become: yes
       yum: name=epel-release update_cache=yes state=present
 
     - name: Installing nginx, php modules and updates them using yum
