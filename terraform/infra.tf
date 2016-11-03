@@ -1,4 +1,4 @@
-#Declares var "vpc_id" to equal default
+#Declares var "vpc_id" to equal vpc-d91a04bd
 variable "vpc_id" {
   description = "VPC ID for usage throughout the build process"
   default = "vpc-d91a04bd"
@@ -191,10 +191,11 @@ resource "aws_eip" "bastion" {
   vpc = true
 }
 
-#Creates a single bastion EC2 instance in public_subnet_a
+#Creates a single bastion EC2 instance in public_subnet_a with keypair cit360
 resource "aws_instance" "bastion" {
   ami = "ami-b04e92d0"
   instance_type = "t2.micro"
   subnet_id = "${aws_subnet.public_subnet_a.id}"
   security_groups = ["${aws_security_group.ssh.id}"]
+  key_name = "cit360"
 }
