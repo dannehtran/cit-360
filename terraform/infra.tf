@@ -4,9 +4,19 @@ variable "vpc_id" {
   default = "vpc-d91a04bd"
 }
 
+#Decalres var "password" to equal the users input using -var
+variable "password" {
+  description = "password for usage of the RDS instance" 
+}
+
 #Sets provider to "aws" and region to "us-west-2"
 provider "aws" {
   region = "us-west-2"
+}
+
+#Sets the VPC to 172.31.0.0/16
+resource "aws_vpc" "main" {
+  cidr_block = "172.31.0.0/16"
 }
 
 #Creates a VPC Internet Gateway
@@ -16,6 +26,24 @@ resource "aws_internet_gateway" "gw" {
   tags = {
     Name = "default_ig"
   }
+}
+
+#Creates a NAT gateway with subnet_id of "aws_subnet.public_subnet_a"
+resource "aws_nat_gateway" "gw" {
+  allocation_id = "${aws_eip.nat.id}"
+  subnet_id = "${aws_subnet.public_subnet_a.id}"
+  depends_on = ["aws_internet_gateway.gw"]
+}
+
+#Creates an Elastic IP to be attached to the NAT Gateway
+resource "aws_eip" "nat" {
+  vpc = true
+}
+
+#Creates an Elastic IP to be attached to the bastion instance
+resource "aws_eip" "bastion" {
+  instance = "${aws_instance.bastion.id}"
+  vpc = true
 }
 
 #Creates a public subnet with CIDR of "172.31.12.0/24" in us-west-2a
@@ -123,18 +151,6 @@ resource "aws_subnet" "private_subnet_c" {
   }
 }
 
-#Creates an Elastic IP to be attached to the NAT Gateway
-resource "aws_eip" "nat" { 
-  vpc = true
-}
-
-#Creates a NAT gateway with subnet_id of "aws_subnet.public_subnet_a"
-resource "aws_nat_gateway" "gw" {
-  allocation_id = "${aws_eip.nat.id}"
-  subnet_id = "${aws_subnet.public_subnet_a.id}"
-  depends_on = ["aws_internet_gateway.gw"]
-}
-
 #Creates a private routing table in aws with the NAT Gateway
 resource "aws_route_table" "private_routing_table" {
   vpc_id = "${var.vpc_id}"
@@ -169,26 +185,118 @@ resource "aws_route_table_association" "private_subnet_c_rt_assoc" {
 #Allows access from SSH to current IP address
 resource "aws_security_group" "ssh" {
   vpc_id = "${var.vpc_id}"
-  
+  description = "SSH security group"
   ingress {
     from_port = 22
     to_port = 22
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
-  egress {
-    from_port = 0 
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+   egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-#Creates an Elastic IP to be attached to the NAT Gateway
-resource "aws_eip" "bastion" {
-  instance = "${aws_instance.bastion.id}"
-  vpc = true
+#Security group that allows port 22 within the VPC 
+resource "aws_security_group" "rds" {
+  vpc_id = "${var.vpc_id}"
+  description = "RDS security group"
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["${aws_vpc.main.cidr_block}"]
+  }
+   egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+#Security group for the instances that allows port 80 and 22 within the VPC
+resource "aws_security_group" "web" {
+  vpc_id = "${var.vpc_id}"
+  description = "VPC Instance security group"
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["${aws_vpc.main.cidr_block}"]
+  }
+
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["${aws_vpc.main.cidr_block}"] 
+  }
+
+   egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }  
+}
+
+#Security group for ELB that allows port 80 within the VPC
+resource "aws_security_group" "elb" {
+  description = "ELB security group"
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+   egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+#Creates a DB subnet group that references private_subnet_a and private_subnet_b
+resource "aws_db_subnet_group" "main" {
+  name = "main"
+  subnet_ids = ["${aws_subnet.private_subnet_a.id}", "${aws_subnet.private_subnet_b.id}"]
+  tags {
+    Name = "Db subnet group"
+  }
+}
+
+resource "aws_elb" "web" {
+  name = "public-elb"
+  subnets = ["${aws_subnet.public_subnet_b.id}", "${aws_subnet.public_subnet_c.id}"]
+  security_groups = ["${aws_security_group.elb.id}"]
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 5
+    target = "HTTP:80/"
+    interval = 30
+  }
+  
+  instances = ["${aws_instance.webserverb.id}", "${aws_instance.webserverc.id}"] 
+  connection_draining = true
+  connection_draining_timeout = 60
+  
+  tags {
+    Name = "public-elb"
+  } 
 }
 
 #Creates a single bastion EC2 instance in public_subnet_a with keypair cit360
@@ -198,4 +306,68 @@ resource "aws_instance" "bastion" {
   subnet_id = "${aws_subnet.public_subnet_a.id}"
   security_groups = ["${aws_security_group.ssh.id}"]
   key_name = "cit360"
+
+  provisioner "remote-exec" {
+    inline = [ 
+    "sudo easy_install pip",
+    "sudo pip install paramiko PyYAML Jinja2 httplib2 six",
+    "sudo pip install ansible"
+    ]
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      agent = "false"
+      private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
+      timeout = "120s"
+    }
+  }
+  tags {
+    Name = "bastion"
+    }
 }
+
+#Creates a single t2.micro instance in private_subnet_c with keypair cit360
+resource "aws_instance" "webserverb" {
+  ami = "ami-5ec1673e"
+  instance_type = "t2.micro"
+  associate_public_ip_address = false
+  subnet_id = "${aws_subnet.private_subnet_b.id}"
+  security_groups = ["${aws_security_group.web.id}"]
+  key_name = "cit360"
+  tags {
+    Name = "webserver-b"
+    Service = "curriculum"
+  }
+}
+
+#Creates a single t2.micro instance in private_subnet_c with keypair cit360
+resource "aws_instance" "webserverc" {
+  ami = "ami-5ec1673e"
+  instance_type = "t2.micro"
+  associate_public_ip_address = false
+  subnet_id = "${aws_subnet.private_subnet_c.id}"
+  security_groups = ["${aws_security_group.web.id}"]
+  key_name = "cit360"
+  tags {
+    Name = "webserver-c"
+    Service = "curriculum"
+  }
+}
+
+#Creates a single DB instance as an RDS with mariadb as a type
+resource "aws_db_instance" "rds" {
+  identifier = "rds"
+  allocated_storage = 5
+  storage_type = "gp2"
+  engine = "mariadb"
+  engine_version = "10.0.24"
+  instance_class = "db.t2.micro"
+  multi_az = "false"
+  name = "RDS"
+  username = "master"
+  password = "${var.password}"
+  publicly_accessible = false
+  vpc_security_group_ids = ["${aws_security_group.rds.id}"]
+  db_subnet_group_name = "${aws_db_subnet_group.main.id}"
+}
+
