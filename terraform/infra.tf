@@ -205,8 +205,8 @@ resource "aws_security_group" "rds" {
   vpc_id = "${var.vpc_id}"
   description = "RDS security group"
   ingress {
-    from_port = 22
-    to_port = 22
+    from_port = 3306
+    to_port = 3306
     protocol = "tcp"
     cidr_blocks = ["${aws_vpc.main.cidr_block}"]
   }
@@ -318,7 +318,6 @@ resource "aws_instance" "bastion" {
       user = "ec2-user"
       agent = "false"
       private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
-      timeout = "120s"
     }
   }
   tags {
@@ -364,7 +363,7 @@ resource "aws_db_instance" "rds" {
   instance_class = "db.t2.micro"
   multi_az = "false"
   name = "RDS"
-  username = "master"
+  username = "root"
   password = "${var.password}"
   publicly_accessible = false
   vpc_security_group_ids = ["${aws_security_group.rds.id}"]
