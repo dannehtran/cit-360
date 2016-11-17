@@ -86,12 +86,22 @@
     - name: Updating composer directory
       become: yes
       command: /usr/local/bin/composer update chdir={{ service_dir }}
+    
+    - name: Changes storage permissions to be RWX by everyone
+      become: yes 
+      file: path=storage mode=0777
+    
+    - name: Changes directory to service_dir
+      become: yes
+      command: chdir="{{ service_dir }}"
+    
+    - name: Changes owner of . to nginx
+      become: yes
+      file: path=. group=nginx owner=nginx 
 
-    - become: yes 
-      command: chmod -R 0777 storage chdir="{{ service_dir }}"
-
-    - become: yes
-      command: chown -R nginx:nginx . chdir="{{ service_dir }}" 
+    - name: Changes directory to service_dir
+      become: yes
+      command: chdir="{{ service_dir }}"
 
     - name: Templates env.j2 to service_dir
       #Becomes root
