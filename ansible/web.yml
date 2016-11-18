@@ -35,16 +35,12 @@
       register: nginx_install
 
     - name: Downloading composer
-      #Becomes root
       become: yes
-      get_url:
-        url: https://getcomposer.org/installer
-        dest: /tmp/installer
-
+      get_url: url=https://getcomposer.org/installer dest=/usr/local/bin mode=0777
     - name: Installing composer
-      become: yes
-      shell: cat /tmp/installer | php -- --install-dir=/usr/local/bin    
-
+      become: yes 
+      shell: php /usr/local/bin/installer --install-dir=/usr/local/bin --filename=composer
+ 
     - name: Copying nginx's configuration file to destination location
       #Becomes root, root:"rw", group: "r", user: "no permissions" 
       become: yes
@@ -92,23 +88,15 @@
 
     - name: Updating composer directory
       become: yes
-      command: /usr/local/bin/composer.phar update chdir={{ service_dir }}
-
-    - name: Creates service_directory
-      #Becomes root
+      command: /usr/local/bin/composer update chdir={{ service_dir }}
+    
+    - name: Changes storage permissions to be RWX by everyone
+      become: yes 
+      file: path={{ service_dir }}/storage mode=0777
+    
+    - name: Changes owner of . to nginx
       become: yes
-      shell: chdir="{{ service_dir }}" mode=0777
-
-    - name: Creates ngnix as a group
-      group: name=nginx state=present
-
-    - name: Creates nginx as a user
-      user: name=ngnix state=present
-
-    - name: Creates nginx directory
-      #Becomes root
-      become: yes
-      shell: chdir="{{ service_dir }}" state=directory group=nginx owner=nginx
+      file: path={{ service_dir }}/. group=nginx owner=nginx 
 
     - name: Templates env.j2 to service_dir
       #Becomes root
