@@ -13,16 +13,6 @@
   vars_files:
     - secrets.yml
   tasks:
-    - name: Setting SELinux in permissive mode
-      #Replaces "^SELINUX=" with "SELINUX=permissive"
-      become: yes
-      lineinfile: dest=/etc/sysconfig/selinux regexp="^SELINUX=" line="SELINUX=permissive"
-
-    - name: Commands SELinux to go in permissive mode
-      #Becomes root
-      become: yes
-      command: setenforce 0
-
     - name: Installing epel-release and updates them using yum
       #Becomes root
       become: yes
@@ -31,7 +21,7 @@
     - name: Installing nginx, php modules and updates them using yum
       #Becomes root
       become: yes
-      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=present
+      yum: name=nginx,php56u,php56u-fpm,php56u-ldap,php56u-mbstring,php56u-mcrypt,php56u-mysql,php-phpunit-PHPUnit,php56u-cli update_cache=yes state=present
       register: nginx_install
 
     - name: Downloading composer
