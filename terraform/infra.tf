@@ -307,12 +307,15 @@ resource "aws_instance" "bastion" {
   security_groups = ["${aws_security_group.ssh.id}"]
   key_name = "cit360"
 
+#Connects to a remote node in the EC2 Instance and installs pip and ansible
   provisioner "remote-exec" {
     inline = [ 
     "sudo easy_install pip",
     "sudo pip install paramiko PyYAML Jinja2 httplib2 six",
     "sudo pip install ansible"
     ]
+
+#Makes the connection to the EC2 Instance via ssh and gives it the cit360 key
     connection {
       type = "ssh"
       user = "ec2-user"
@@ -320,6 +323,35 @@ resource "aws_instance" "bastion" {
       private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
     }
   }
+
+#Copies the directory "ansible" into the EC2 Instance
+  provisioner "file" {
+    source = "/Users/Dan/cit-360/ansible"
+    destination = "/home/ec2-user/"
+
+#Makes the connection to the EC2 Instance via ssh and gives it the cit360 key 
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      agent = "false"
+      private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
+    }
+  }
+
+#Copies the cit360 key to the EC2 Instance to deploy web.yml playbook
+  provisioner "file" {
+    source = "/Users/Dan/cit-360/terraform/cit360.pem"
+    destination = "/home/ec2-user/.ssh/cit360.pem"
+
+#Makes the connection to the EC2 Instance via ssh and gives it the cit360 key
+     connection {
+      type = "ssh"
+      user = "ec2-user"
+      agent = "false"
+      private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
+    }
+  }
+
   tags {
     Name = "bastion"
     }
