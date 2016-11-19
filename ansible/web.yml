@@ -17,11 +17,11 @@
       #Becomes root
       become: yes
       yum: name=epel-release update_cache=yes state=present
-
+   
     - name: Installing nginx, php modules and updates them using yum
       #Becomes root
       become: yes
-      yum: name=nginx,php56u,php56u-fpm,php56u-ldap,php56u-mbstring,php56u-mcrypt,php56u-mysql,php-phpunit-PHPUnit,php56u-cli update_cache=yes state=present
+      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=present
       register: nginx_install
 
     - name: Downloading composer
