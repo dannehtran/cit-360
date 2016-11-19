@@ -17,11 +17,15 @@
       #Becomes root
       become: yes
       yum: name=epel-release update_cache=yes state=present
-   
+  
+    - name: Removing 5.39 php to update to 5.4
+      become: yes
+      yum: name=php-common state=absent
+ 
     - name: Installing nginx, php modules and updates them using yum
       #Becomes root
       become: yes
-      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=present
+      yum: name=nginx,php54,php54-fpm,php54-ldap,php54-mbstring,php54-mcrypt,php54-mysql update_cache=yes state=present
       register: nginx_install
 
     - name: Downloading composer
