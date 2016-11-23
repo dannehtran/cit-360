@@ -1,13 +1,13 @@
 ---
 - hosts: web  
   vars:
-    server_name: curriculum
+    server_name: RDS
     service_name: curriculum
     service_version: 1.0
     app_env: test
     db_host: localhost
-    db_database: curriculum
-    db_username: curriculum
+    db_database: RDS
+    db_username: root
     db_port: 3306
     service_dir: /usr/share/nginx/{{ service_name }}
   vars_files:
@@ -21,8 +21,23 @@
     - name: Installing nginx, php modules and updates them using yum
       #Becomes root
       become: yes
-      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql, php-phpunit-PHPUNIT update_cache=yes state=present
+      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=present
       register: nginx_install
+
+    - name: Uninstalling php 5.39 and httpd
+      #Becomes root
+      become: yes
+      yum: name=php-common,httpd,httpd-tools state=absent
+
+    - name: Downloading updated repository
+      #Becomes root
+      become: yes
+      yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm,https://mirror.webtatic.com/yum/el7/webtatic-release.rpm state=present
+
+    - name: Installing php 5.6 and httpd24
+      #Becomes root
+      become: yes
+      yum: name=php56,php56-fpm,php56-ldap,php56-mbstring,php56-mcrypt,php56-mysqlnd,httpd24 update_cache=yes state=present
 
     - name: Downloading composer
       become: yes
