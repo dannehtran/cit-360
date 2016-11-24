@@ -61,13 +61,13 @@
     - name: Templates php.ini file
       #Permission for root: "rw" , User and group:"r"
       become: yes
-      template: src=web/php.ini.j2 dest=/etc/php.ini mode=0644
+      template: src=web/php.ini.j2 dest=/etc/php-5.6.ini mode=0644
       register: php_conf
 
     - name: Copying php configuration file into destined file
       #Becomes root , permission root:"rw" , user and group:"r"
       become: yes
-      copy: src=web/php-fpm-web.conf dest=/etc/php-fpm.d/www.conf mode=0644
+      copy: src=web/php-fpm-web.conf dest=/etc/php-fpm-5.6.d/www.conf mode=0644
       register: php_fpm_conf
 
     - name: Starts nginx on boot
@@ -98,10 +98,14 @@
     - name: Changes storage permissions to be RWX by everyone
       become: yes 
       file: path={{ service_dir }}/storage mode=0777
-    
+
+    - name: Changes Curriculum directory permissions
+      become: yes
+      file: path={{ service_dir }} state=directory recurse=yes mode=0777    
+
     - name: Changes owner of . to nginx
       become: yes
-      file: path={{ service_dir }}/. group=nginx owner=nginx 
+      file: path={{ service_dir }}/. state=directory recurse=yes  group=nginx owner=nginx 
 
     - name: Templates env.j2 to service_dir
       #Becomes root
