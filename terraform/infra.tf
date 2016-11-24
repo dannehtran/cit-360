@@ -351,7 +351,20 @@ resource "aws_instance" "bastion" {
       private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
     }
   }
+#Sets the private key to be RW for root only
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chmod 0600 .ssh/cit360.pem"
+    ]
 
+#Makes the connection to the EC2 Instance via ssh and gives it the cit360 key
+    connection {
+      type = "ssh"
+      user = "ec2-user"
+      agent = "false"
+      private_key = "${file("/Users/Dan/cit-360/terraform/cit360.pem")}"
+    }
+  }
   tags {
     Name = "bastion"
     }
