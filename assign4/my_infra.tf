@@ -230,17 +230,14 @@ resource "aws_instance" "server" {
     vpc_security_group_ids = ["${aws_security_group.windows.id}"]
 }
 
-#
-# Uncomment this when you are ready to connect a client to the domain
-#
-#resource "aws_instance" "client" {
-#    ami = "ami-b871aad8"
-#    associate_public_ip_address = true
-#    subnet_id = "${aws_subnet.public_subnet_a.id}"
-#    instance_type = "c4.large"
-#    tags {
-#        Name = "client"
-#    }
-#    key_name = "cit360"
-#    vpc_security_group_ids = ["${aws_security_group.windows.id}"]
-#}
+resource "aws_instance" "client" {
+    ami = "ami-b871aad8"
+    associate_public_ip_address = true
+    subnet_id = "${aws_subnet.public_subnet_a.id}"
+    instance_type = "c4.large"
+    tags {
+        Name = "client"
+    }
+    key_name = "cit360"
+    vpc_security_group_ids = ["${aws_security_group.windows.id}"]
+}
